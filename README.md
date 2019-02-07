@@ -30,7 +30,6 @@ The original version of this program was implemented as a shell script. This ser
 
 ```
 while true; do
-  # Echo some colored stuff here
   clear
   echo $@
   /bin/bash -c "$@"
