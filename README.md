@@ -13,11 +13,12 @@ Simple:
 
 `inl echo hi`
 
-Don't run to completion, use SIGKILL instead:
+Don't run to completion (uses SIGKILL on event):
 
 `inl -n echo zzz \&\& sleep 60`
 
-Don't run to completion, wait 5 seconds before re-establishing watches:
+Don't run to completion, wait 5 seconds before re-establishing watches. This is
+may be useful when running a build step that touches the filesystem:
 
 `inl -n -t 5s go build \&\& ./binary`
 
