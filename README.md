@@ -3,6 +3,8 @@
 2. Wait for a file-system event in the current working directory.
 3. Goto 1.
 
+I often have this running in one terminal pane, and my editor in another.
+
 ## Installation
 `go get -u github.com/y3llowcake/inl`
 
