@@ -94,13 +94,12 @@ func main() {
 
 // Recursively watch a filesystem path.
 func watchLoop(path string) {
-	log.Infof("watching '%s'", path)
+	log.Debugf("establishing watches...")
 	watcher, err := fsnotify.NewWatcher()
 	check(err)
 	defer watcher.Close()
 	check(watcher.Add(path))
 	dircount := 1
-	dirskip := 0
 	excludeDirRegexp := regexp.MustCompile(*excludeDir)
 	excludeFileRegexp := regexp.MustCompile(*excludeFile)
 	includeFileRegexp := regexp.MustCompile(*includeFile)
@@ -110,8 +109,6 @@ func watchLoop(path string) {
 		}
 		log.Debugf("watch directory candidate '%s'", path)
 		if excludeDirRegexp.MatchString(f.Name()) {
-			// Do not watch this directory.
-			dirskip++
 			return filepath.SkipDir
 		}
 		log.Debugf("watching '%s'", path)
@@ -120,8 +117,7 @@ func watchLoop(path string) {
 		return nil
 	})
 	check(err)
-	log.Debugf("found %d directories to watch, skipped %d", dircount, dirskip)
-	log.Debugf("waiting for events...")
+	log.Infof("watching '%s' +%d", path, dircount)
 	for {
 		select {
 		case event := <-watcher.Events:
@@ -137,7 +133,7 @@ func watchLoop(path string) {
 			log.Ln()
 			log.Infof(strings.Repeat("=", 80))
 			log.Clear()
-			log.Infof("watch event: %+v", event)
+			log.Infof("change detected: %+v", event)
 			return
 		case err := <-watcher.Errors:
 			check(err)
@@ -148,7 +144,7 @@ func watchLoop(path string) {
 func invoke() *exec.Cmd {
 	args := []string{"/bin/bash", "-c", "--", strings.Join(flag.Args(), " ")}
 	cmd := exec.Command(args[0], args[1:]...)
-	log.Infof("command: %+q", args)
+	log.Infof("executing command: %+q", args)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	log.Ln()
