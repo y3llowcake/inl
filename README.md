@@ -1,5 +1,5 @@
 # inl: inotify loop
-1. Run an arbitrary shell command.
+1. Run an arbitrary shell command. (e.g. build, test, scp, you-name-it)
 2. Wait for a file-system event in the current working directory.
 3. Goto 1.
 
