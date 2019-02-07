@@ -16,10 +16,10 @@ import (
 
 var (
 	verbose     = flag.Bool("v", false, "verbose logging")
-	excludeDir  = flag.String("excludeDir", `^\.`, "regular expression of directory basenames to exclude from watching")
+	excludeDir  = flag.String("exclude_dir", `^\.`, "regular expression of directory basenames to exclude from watching")
 	excludeFile = flag.String("exclude", `^.*\.swp$`, "regular expression of files to exclude from watching")
-	throttle    = flag.Duration("throttle", time.Millisecond*10, "a duration of time to wait between a filesystem event and triggering the action")
-	wait        = flag.Bool("wait", true, "wait for the action to run to completion")
+	throttle    = flag.Duration("t", time.Millisecond*100, "a duration of time to wait between a filesystem event and triggering the action")
+	noWait      = flag.Bool("n", false, "do not wait for the action to run to completion, use sigkill on the next filesystem change")
 )
 
 func check(err error) {
@@ -28,29 +28,23 @@ func check(err error) {
 	}
 }
 
-func main() {
-	flag.Parse()
-	if len(flag.Args()) < 1 {
-		fmt.Println("usage: inl COMMAND")
-		os.Exit(1)
-	}
-	log.Clear()
-	for {
-		watchLoop("./")
-	}
-}
-
 type Log struct{}
 
-func (_ Log) Infof(f string, i ...interface{}) {
-	s := fmt.Sprintf(f, i...)
-	tm.Println(tm.Color(tm.Bold("[INL] "), tm.GREEN) + s)
-	tm.Flush()
+func (l Log) Infof(f string, i ...interface{}) {
+	l.Sayf(tm.GREEN, f, i...)
 }
 
-func (_ Log) Errorf(f string, i ...interface{}) {
+func (l Log) Errorf(f string, i ...interface{}) {
+	l.Sayf(tm.RED, f, i...)
+}
+
+func (l Log) Warningf(f string, i ...interface{}) {
+	l.Sayf(tm.YELLOW, f, i...)
+}
+
+func (_ Log) Sayf(color int, f string, i ...interface{}) {
 	s := fmt.Sprintf(f, i...)
-	tm.Println(tm.Color(tm.Bold("[INL] "), tm.RED) + s)
+	tm.Println(tm.Color(tm.Bold("[INL] "), color) + s)
 	tm.Flush()
 }
 
@@ -74,9 +68,32 @@ func (_ Log) Ln() {
 
 var log Log
 
+func main() {
+	flag.Parse()
+	if len(flag.Args()) < 1 {
+		fmt.Println("usage: inl COMMAND")
+		os.Exit(1)
+	}
+	log.Clear()
+
+	cmd := invoke()
+	path, err := filepath.Abs("./")
+	check(err)
+	for {
+		time.Sleep(*throttle)
+		watchLoop(path)
+		if cmd != nil {
+			log.Warningf("killing process %d", cmd.Process.Pid)
+			cmd.Process.Signal(os.Kill)
+			cmd.Wait()
+		}
+		cmd = invoke()
+	}
+}
+
 // Recursively watch a filesystem path.
 func watchLoop(path string) {
-	log.Debugf("creating recursive watches for '%s'", path)
+	log.Infof("watching '%s'", path)
 	watcher, err := fsnotify.NewWatcher()
 	check(err)
 	defer watcher.Close()
@@ -107,8 +124,6 @@ func watchLoop(path string) {
 	var trigger *fsnotify.Event
 	eventCount := 0
 
-	cmd := invoke()
-
 	for {
 		select {
 		case event := <-watcher.Events:
@@ -127,22 +142,13 @@ func watchLoop(path string) {
 			check(err)
 		case <-t.C:
 			// Ticker fired. There was a lull in events and we can now process.
-			// Stop any already running command.
-			if cmd != nil {
-				log.Infof("sending sigkill to %d", cmd.Process.Pid)
-				cmd.Process.Signal(os.Kill)
-				cmd.Wait()
-			}
-
 			log.Ln()
 			log.Ln()
 			log.Ln()
 			log.Clear()
 			log.Infof("trigger: %+v (+%d)", trigger, eventCount)
-			cmd = invoke()
 
-			eventCount = 0
-			trigger = nil
+			return
 		}
 	}
 }
@@ -156,7 +162,7 @@ func invoke() *exec.Cmd {
 	log.Ln()
 	check(cmd.Start())
 
-	if *wait {
+	if !*noWait {
 		cmd.Wait()
 		log.Ln()
 		if cmd.ProcessState.Success() {
