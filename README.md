@@ -20,14 +20,14 @@ Don't run to completion (uses SIGKILL on event):
 Don't run to completion, wait 5 seconds before re-establishing watches. This is
 may be useful when running a build step that touches the filesystem:
 
-`inl -n -t 5s go build \&\& ./binary`
+`inl -n -t 5s make \&\& ./long-lived-server`
 
-Only watch certain files:
+Alternatively, only watch certain files:
 
 `inl -i=".*\.go" go test ./...`
 
 ## A bit of history
-The original version of this program was implemented as a shell script. This served me well for over 5 years. Then I decided it was time for more features.
+The original version of this program was implemented as a shell script. This served me well for nearly a decade. Then I decided it was time for more features.
 
 ```
 while true; do
