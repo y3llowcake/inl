@@ -17,7 +17,8 @@ import (
 var (
 	verbose     = flag.Bool("v", false, "verbose logging")
 	excludeDir  = flag.String("exclude_dir", `^\.`, "regular expression of directory basenames to exclude from watching")
-	excludeFile = flag.String("exclude", `^.*\.swp$`, "regular expression of files to exclude from watching")
+	excludeFile = flag.String("exclude", `^.*\.swp$`, "regular expression of files to exclude when watching")
+	includeFile = flag.String("include", `.*`, "regular expression of files to include when watching")
 	throttle    = flag.Duration("t", time.Millisecond*100, "a duration of time to wait between a filesystem event and triggering the action")
 	noWait      = flag.Bool("n", false, "do not wait for the action to run to completion, use sigkill on the next filesystem change")
 )
@@ -102,6 +103,7 @@ func watchLoop(path string) {
 	dirskip := 0
 	excludeDirRegexp := regexp.MustCompile(*excludeDir)
 	excludeFileRegexp := regexp.MustCompile(*excludeFile)
+	includeFileRegexp := regexp.MustCompile(*includeFile)
 	err = filepath.Walk(path, func(path string, f os.FileInfo, err error) error {
 		if !f.IsDir() {
 			return nil
@@ -120,35 +122,25 @@ func watchLoop(path string) {
 	check(err)
 	log.Debugf("found %d directories to watch, skipped %d", dircount, dirskip)
 	log.Debugf("waiting for events...")
-	t := time.NewTimer(time.Hour /*arbitrary*/)
-	var trigger *fsnotify.Event
-	eventCount := 0
-
 	for {
 		select {
 		case event := <-watcher.Events:
 			log.Debugf("event: %+v", event)
-			if excludeFileRegexp.MatchString(event.Name) {
+			if excludeFileRegexp.MatchString(event.Name) || !includeFileRegexp.MatchString(event.Name) {
 				log.Debugf("ignoring event: %+v", event)
 				break
 			}
-			if trigger == nil {
-				trigger = &event
-			}
-			eventCount++
-			// Reset the timer.
-			t.Reset(*throttle)
+			// Ticker fired. There was a lull in events and we can now process.
+
+			log.Ln()
+			log.Ln()
+			log.Ln()
+			log.Infof(strings.Repeat("=", 80))
+			log.Clear()
+			log.Infof("watch event: %+v", event)
+			return
 		case err := <-watcher.Errors:
 			check(err)
-		case <-t.C:
-			// Ticker fired. There was a lull in events and we can now process.
-			log.Ln()
-			log.Ln()
-			log.Ln()
-			log.Clear()
-			log.Infof("trigger: %+v (+%d)", trigger, eventCount)
-
-			return
 		}
 	}
 }
