@@ -10,16 +10,16 @@ Premise:
 
 # Usage
 Simple:
-`inl echo hi`
+```inl echo hi```
 
 Don't run to completion, use SIGKILL instead:
-`inl -n echo hi \&\& sleep 60`
+```inl -n echo hi \&\& sleep 60```
 
 Don't run to completion, wait 5 seconds before re-establishing watches:
-`inl -n -t 5s go build \&\& ./binary`
+```inl -n -t 5s go build \&\& ./binary```
 
 Only watch certain files:
-`inl --include=".*\.go" go build`
+```inl -i=".*\.go" go build```
 
 # A bit of history
 The original version of this program was implemented as a shell script. This served me well for over 5 years. Then I decided it was time for more features.

@@ -16,67 +16,24 @@ import (
 
 var (
 	verbose     = flag.Bool("v", false, "verbose logging")
-	excludeDir  = flag.String("exclude_dir", `^\.`, "regular expression of directory basenames to exclude from watching")
-	excludeFile = flag.String("exclude", `(^.*\.sw[px]$)|(/4913$)`, "regular expression of files to exclude when watching")
-	includeFile = flag.String("include", `.*`, "regular expression of files to include when watching")
+	excludeDir  = flag.String("ed", `^\.`, "regular expression of directory basenames to exclude from watching")
+	excludeFile = flag.String("e", `(^.*\.sw[px]$)|(/4913$)`, "regular expression of files to exclude when watching")
+	includeFile = flag.String("i", `.*`, "regular expression of files to include when watching")
 	throttle    = flag.Duration("t", time.Millisecond*100, "a duration of time to wait between a filesystem event and triggering the action")
 	noWait      = flag.Bool("n", false, "do not wait for the action to run to completion, use sigkill on the next filesystem change")
 )
 
-func check(err error) {
-	if err != nil {
-		panic(err)
-	}
-}
-
-type Log struct{}
-
-func (l Log) Infof(f string, i ...interface{}) {
-	l.Sayf(tm.GREEN, f, i...)
-}
-
-func (l Log) Errorf(f string, i ...interface{}) {
-	l.Sayf(tm.RED, f, i...)
-}
-
-func (l Log) Warningf(f string, i ...interface{}) {
-	l.Sayf(tm.YELLOW, f, i...)
-}
-
-func (_ Log) Sayf(color int, f string, i ...interface{}) {
-	s := fmt.Sprintf(f, i...)
-	tm.Println(tm.Color(tm.Bold("[INL] "), color) + s)
-	tm.Flush()
-}
-
-func (l Log) Debugf(f string, i ...interface{}) {
-	if !*verbose {
-		return
-	}
-	l.Infof(f, i...)
-}
-
-func (_ Log) Clear() {
-	tm.Clear()
-	tm.MoveCursor(1, 1)
-	tm.Flush()
-}
-
-func (_ Log) Ln() {
-	tm.Println()
-	tm.Flush()
-}
-
-var log Log
-
 func main() {
-	flag.Parse()
-	if len(flag.Args()) < 1 {
-		fmt.Println("usage: inl COMMAND")
+	flag.Usage = func() {
+		fmt.Fprintf(flag.CommandLine.Output(), "usage: inl SHELL-COMMAND\n")
+		flag.PrintDefaults()
 		os.Exit(1)
 	}
+	flag.Parse()
+	if len(flag.Args()) < 1 {
+		flag.Usage()
+	}
 	log.Clear()
-
 	cmd := invoke()
 	path, err := filepath.Abs("./")
 	check(err)
@@ -163,3 +120,49 @@ func invoke() *exec.Cmd {
 
 	return cmd
 }
+
+func check(err error) {
+	if err != nil {
+		panic(err)
+	}
+}
+
+type Log struct{}
+
+func (l Log) Infof(f string, i ...interface{}) {
+	l.Sayf(tm.GREEN, f, i...)
+}
+
+func (l Log) Errorf(f string, i ...interface{}) {
+	l.Sayf(tm.RED, f, i...)
+}
+
+func (l Log) Warningf(f string, i ...interface{}) {
+	l.Sayf(tm.YELLOW, f, i...)
+}
+
+func (_ Log) Sayf(color int, f string, i ...interface{}) {
+	s := fmt.Sprintf(f, i...)
+	tm.Println(tm.Color(tm.Bold("[INL] "), color) + s)
+	tm.Flush()
+}
+
+func (l Log) Debugf(f string, i ...interface{}) {
+	if !*verbose {
+		return
+	}
+	l.Infof(f, i...)
+}
+
+func (_ Log) Clear() {
+	tm.Clear()
+	tm.MoveCursor(1, 1)
+	tm.Flush()
+}
+
+func (_ Log) Ln() {
+	tm.Println()
+	tm.Flush()
+}
+
+var log Log
