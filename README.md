@@ -2,7 +2,7 @@
 
 Premise:
 1. Run an arbitrary shell command.
-2. Wait for a filesystem event in the current working directory.
+2. Wait for a file-system event in the current working directory.
 3. Goto 1.
 
 ## Installation
@@ -15,7 +15,7 @@ Simple:
 
 Don't run to completion, use SIGKILL instead:
 
-`inl -n echo hi \&\& sleep 60`
+`inl -n echo zzz \&\& sleep 60`
 
 Don't run to completion, wait 5 seconds before re-establishing watches:
 
