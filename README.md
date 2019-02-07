@@ -23,7 +23,7 @@ Don't run to completion, wait 5 seconds before re-establishing watches:
 
 Only watch certain files:
 
-`inl -i=".*\.go" go build`
+`inl -i=".*\.go" go test ./...`
 
 ## A bit of history
 The original version of this program was implemented as a shell script. This served me well for over 5 years. Then I decided it was time for more features.
