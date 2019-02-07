@@ -11,7 +11,7 @@ I often have this running in one terminal pane, and my editor in another.
 ## Usage
 Simple:
 
-`inl echo hi`
+`inl ls -la`
 
 Don't run to completion (uses SIGKILL on event):
 
