@@ -1,6 +1,4 @@
 # inl: inotify loop
-
-Premise:
 1. Run an arbitrary shell command.
 2. Wait for a file-system event in the current working directory.
 3. Goto 1.
