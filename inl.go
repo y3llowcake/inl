@@ -17,7 +17,7 @@ import (
 var (
 	verbose     = flag.Bool("v", false, "verbose logging")
 	excludeDir  = flag.String("exclude_dir", `^\.`, "regular expression of directory basenames to exclude from watching")
-	excludeFile = flag.String("exclude", `^.*\.swp$`, "regular expression of files to exclude when watching")
+	excludeFile = flag.String("exclude", `(^.*\.sw[px]$)|(/4913$)`, "regular expression of files to exclude when watching")
 	includeFile = flag.String("include", `.*`, "regular expression of files to include when watching")
 	throttle    = flag.Duration("t", time.Millisecond*100, "a duration of time to wait between a filesystem event and triggering the action")
 	noWait      = flag.Bool("n", false, "do not wait for the action to run to completion, use sigkill on the next filesystem change")
