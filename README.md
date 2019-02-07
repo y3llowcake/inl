@@ -5,23 +5,27 @@ Premise:
 2. Wait for a filesystem event in the current working directory.
 3. Goto 1.
 
-# Installation
+## Installation
 `go get -u github.com/y3llowcake/inl`
 
-# Usage
+## Usage
 Simple:
-```inl echo hi```
+
+`inl echo hi`
 
 Don't run to completion, use SIGKILL instead:
-```inl -n echo hi \&\& sleep 60```
+
+`inl -n echo hi \&\& sleep 60`
 
 Don't run to completion, wait 5 seconds before re-establishing watches:
-```inl -n -t 5s go build \&\& ./binary```
+
+`inl -n -t 5s go build \&\& ./binary`
 
 Only watch certain files:
-```inl -i=".*\.go" go build```
 
-# A bit of history
+`inl -i=".*\.go" go build`
+
+## A bit of history
 The original version of this program was implemented as a shell script. This served me well for over 5 years. Then I decided it was time for more features.
 
 ```
