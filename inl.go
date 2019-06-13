@@ -37,6 +37,9 @@ func main() {
 	cmd := invoke()
 	path, err := filepath.Abs("./")
 	check(err)
+	// If the current directory is a symlink, follow it.
+	path, err = filepath.EvalSymlinks(path)
+	check(err)
 	for {
 		time.Sleep(*throttle)
 		watchLoop(path)
@@ -55,12 +58,12 @@ func watchLoop(path string) {
 	watcher, err := fsnotify.NewWatcher()
 	check(err)
 	defer watcher.Close()
-	check(watcher.Add(path))
-	dircount := 1
+	dircount := 0
 	excludeDirRegexp := regexp.MustCompile(*excludeDir)
 	excludeFileRegexp := regexp.MustCompile(*excludeFile)
 	includeFileRegexp := regexp.MustCompile(*includeFile)
 	err = filepath.Walk(path, func(path string, f os.FileInfo, err error) error {
+		// TODO add an option to follow symlinks.
 		if !f.IsDir() {
 			return nil
 		}
@@ -74,7 +77,10 @@ func watchLoop(path string) {
 		return nil
 	})
 	check(err)
-	log.Infof("watching '%s' +%d", path, dircount)
+	if dircount < 1 {
+		panic("unable to establish watches: no directories found")
+	}
+	log.Infof("watching '%s' +%d", path, dircount-1)
 	for {
 		select {
 		case event := <-watcher.Events:
