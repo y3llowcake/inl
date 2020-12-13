@@ -20,6 +20,7 @@ var (
 	excludeFile = flag.String("e", `(^.*\.sw[px]$)|(/4913$)`, "regular expression of files to exclude when watching")
 	includeFile = flag.String("i", `.*`, "regular expression of files to include when watching")
 	throttle    = flag.Duration("t", time.Millisecond*100, "a duration of time to wait between a filesystem event and triggering the action")
+	cooldown    = flag.Duration("c", 0, "a duration of time to wait between executing the command and the next watch")
 	noWait      = flag.Bool("n", false, "do not wait for the action to run to completion, use sigkill on the next filesystem change")
 )
 
@@ -41,14 +42,15 @@ func main() {
 	path, err = filepath.EvalSymlinks(path)
 	check(err)
 	for {
-		time.Sleep(*throttle)
 		watchLoop(path)
+		time.Sleep(*throttle)
 		if cmd != nil {
 			log.Warningf("killing process %d", cmd.Process.Pid)
 			cmd.Process.Signal(os.Kill)
 			cmd.Wait()
 		}
 		cmd = invoke()
+		time.Sleep(*cooldown)
 	}
 }
 
